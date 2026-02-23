@@ -111,9 +111,9 @@ body {
   transition: transform 220ms ease, opacity 220ms ease, filter 220ms ease;
 }
 
-.card:nth-child(1) { transform: translateY(0) scale(1); }
-.card:nth-child(2) { transform: translateY(10px) scale(0.985); filter: brightness(0.95); }
-.card:nth-child(3) { transform: translateY(20px) scale(0.97); filter: brightness(0.9); }
+.card:nth-child(1) { transform: translateY(0) scale(1); z-index: 3; }
+.card:nth-child(2) { transform: translateY(10px) scale(0.985); filter: brightness(0.95); z-index: 2; }
+.card:nth-child(3) { transform: translateY(20px) scale(0.97); filter: brightness(0.9); z-index: 1; }
 
 .card__media {
   height: 70%;
@@ -190,12 +190,64 @@ body {
 .ctrl--like { background: var(--like); }
 .ctrl--superlike { background: var(--super); }
 
-.note {
-  color: var(--muted);
-  text-align: center;
-  margin: 0;
-  font-size: 14px;
+/* Dragging state — disable transition so card follows finger/cursor exactly */
+.card--dragging {
+  transition: none !important;
+  cursor: grabbing;
+  z-index: 100;
 }
+
+/* Swipe stamp overlay (LIKE / NOPE / SUPER LIKE) */
+.card__stamp {
+  position: absolute;
+  top: 28px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 36px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  border: 4px solid;
+  z-index: 20;
+  user-select: none;
+  transition: opacity 60ms linear;
+}
+.card__stamp--like {
+  right: 28px;
+  color: var(--like);
+  border-color: var(--like);
+  transform: rotate(15deg);
+}
+.card__stamp--nope {
+  left: 28px;
+  color: var(--nope);
+  border-color: var(--nope);
+  transform: rotate(-15deg);
+}
+.card__stamp--super {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  color: var(--super);
+  border-color: var(--super);
+}
+
+/* Empty deck message */
+.deck__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.deck__empty p { margin: 6px 0; }
 
 @media (max-width: 520px) {
   .deck { width: 100%; }

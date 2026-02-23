@@ -61,7 +61,7 @@ function generateProfiles(count = 12) {
       title: sample(JOBS),
       bio: sample(BIOS),
       tags: pickTags(),
-      img: imgFor(sample(UNSPLASH_SEEDS)),
+      photos: Array.from({ length: 3 }, () => imgFor(sample(UNSPLASH_SEEDS))),
     });
   }
   return profiles;
@@ -88,7 +88,7 @@ function renderDeck() {
 
     const img = document.createElement("img");
     img.className = "card__media";
-    img.src = p.img;
+    img.src = p.photos[0];
     img.alt = `${p.name} — profile photo`;
 
     const body = document.createElement("div");
@@ -118,9 +118,14 @@ function renderDeck() {
     body.appendChild(meta);
     body.appendChild(chips);
 
+    const stamp = document.createElement("div");
+    stamp.className = "card__stamp";
+
     card.appendChild(img);
     card.appendChild(body);
+    card.appendChild(stamp);
 
+    addCardHandlers(card, p);
     deckEl.appendChild(card);
   });
 
@@ -132,16 +137,135 @@ function resetDeck() {
   renderDeck();
 }
 
-// Controls (intentionally not implemented)
-likeBtn.addEventListener("click", () => {
-  console.log("Like clicked.");
-});
-nopeBtn.addEventListener("click", () => {
-  console.log("Nope clicked.");
-});
-superLikeBtn.addEventListener("click", () => {
-  console.log("Super Like clicked.");
-});
+// -------------------
+// Card interaction
+// -------------------
+const SWIPE_X = 80;  // px horizontal threshold
+const SWIPE_Y = 80;  // px vertical threshold (upward)
+
+function dismissTopCard(direction) {
+  const top = deckEl.firstElementChild;
+  if (!top || top.classList.contains("deck__empty")) return;
+
+  const fly = {
+    like:  "translateX(160%) rotate(30deg)",
+    nope:  "translateX(-160%) rotate(-30deg)",
+    super: "translateY(-160%)",
+  };
+
+  // Show the final stamp before flying off
+  const stamp = top.querySelector(".card__stamp");
+  const labels = { like: "LIKE", nope: "NOPE", super: "SUPER" };
+  showStamp(stamp, labels[direction], direction, 1);
+
+  top.style.transition = "transform 380ms ease, opacity 380ms ease";
+  top.style.transform = fly[direction];
+  top.style.opacity = "0";
+  top.addEventListener("transitionend", () => {
+    top.remove();
+    checkEmptyDeck();
+  }, { once: true });
+}
+
+function checkEmptyDeck() {
+  if (deckEl.children.length === 0) {
+    const msg = document.createElement("div");
+    msg.className = "deck__empty";
+    msg.innerHTML = `
+      <div>
+        <p style="font-size:52px;margin:0">🎉</p>
+        <p style="font-weight:700">You've seen everyone!</p>
+        <p style="font-size:13px">Hit Shuffle for more</p>
+      </div>`;
+    deckEl.appendChild(msg);
+  }
+}
+
+function showStamp(stamp, text, type, opacity) {
+  stamp.textContent = text;
+  stamp.className = `card__stamp card__stamp--${type}`;
+  stamp.style.opacity = opacity;
+}
+
+function addCardHandlers(card, profile) {
+  let startX = 0, startY = 0, dragging = false, moved = false;
+  let lastTap = 0, photoIdx = 0;
+  const img   = card.querySelector(".card__media");
+  const stamp = card.querySelector(".card__stamp");
+
+  // ── Drag-to-swipe ──────────────────────────────────────────────
+  card.addEventListener("pointerdown", (e) => {
+    if (card !== deckEl.firstElementChild) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    dragging = true;
+    moved = false;
+    card.setPointerCapture(e.pointerId);
+  });
+
+  card.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+
+    card.classList.add("card--dragging");
+    card.style.transform = `translate(${dx}px,${dy}px) rotate(${dx * 0.05}deg)`;
+
+    // Stamp feedback
+    if (dy < -50 && Math.abs(dx) < 90) {
+      showStamp(stamp, "SUPER", "super", Math.min(1, Math.abs(dy) / 120));
+    } else if (dx > 20) {
+      showStamp(stamp, "LIKE", "like", Math.min(1, dx / 100));
+    } else if (dx < -20) {
+      showStamp(stamp, "NOPE", "nope", Math.min(1, Math.abs(dx) / 100));
+    } else {
+      stamp.style.opacity = 0;
+    }
+  });
+
+  function releaseCard(clientX, clientY) {
+    if (!dragging) return;
+    dragging = false;
+    card.classList.remove("card--dragging");
+    stamp.style.opacity = 0;
+
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+
+    if (dy < -SWIPE_Y && Math.abs(dx) < 90) {
+      dismissTopCard("super");
+    } else if (dx > SWIPE_X) {
+      dismissTopCard("like");
+    } else if (dx < -SWIPE_X) {
+      dismissTopCard("nope");
+    } else {
+      // Snap back
+      card.style.transition = "transform 300ms ease, opacity 300ms ease";
+      card.style.transform = "";
+      setTimeout(() => { card.style.transition = ""; }, 320);
+    }
+  }
+
+  card.addEventListener("pointerup",     (e) => releaseCard(e.clientX, e.clientY));
+  card.addEventListener("pointercancel", (e) => releaseCard(startX, startY));
+
+  // ── Double-tap: cycle profile photos ───────────────────────────
+  card.addEventListener("click", () => {
+    if (moved) { moved = false; return; } // ignore drag-release clicks
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      photoIdx = (photoIdx + 1) % profile.photos.length;
+      img.src = profile.photos[photoIdx];
+    }
+    lastTap = now;
+  });
+}
+
+// Controls
+likeBtn.addEventListener("click", () => dismissTopCard("like"));
+nopeBtn.addEventListener("click", () => dismissTopCard("nope"));
+superLikeBtn.addEventListener("click", () => dismissTopCard("super"));
 shuffleBtn.addEventListener("click", resetDeck);
 
 // Boot
