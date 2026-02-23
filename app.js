@@ -188,7 +188,8 @@ const SWIPE_H = 80;   // px to trigger horizontal swipe
 const SWIPE_UP = 80;  // px to trigger upward swipe
 
 function getTopCard() {
-  return deckEl.firstElementChild;
+  const el = deckEl.firstElementChild;
+  return el && el.classList.contains("card") ? el : null;
 }
 
 function attachGestures(card) {
@@ -286,7 +287,7 @@ function updateOverlays(card, dx, dy) {
 }
 
 function clearOverlays(card) {
-  card.querySelectorAll(".swipe-overlay").forEach((el) => (el.style.opacity = 0));
+  card.querySelectorAll(".swipe-overlay").forEach((el) => {el.style.opacity = 0;});
 }
 
 function setOverlay(card, direction) {
