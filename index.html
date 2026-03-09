@@ -1,25 +1,35 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
-  <title>Tinder Frontend</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AI Tinder</title>
+  <meta name="description" content="AI-powered dating app clone with match polling." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
+
 <body>
   <div class="app">
     <header class="app__header">
       <div class="brand">
         <span class="brand__logo" aria-hidden="true">🔥</span>
-        <span class="brand__name">Tinder Clone</span>
-        <span class="brand__tag">frontend only</span>
+        <span class="brand__name">AI Tinder</span>
+        <!-- Match count badge -->
+        <span class="match-badge" id="matchCount" aria-label="New matches" style="display:none">0</span>
       </div>
-      <button class="ghost-btn" id="shuffleBtn" aria-label="Shuffle deck">
-        Shuffle
-      </button>
+      <div class="header-actions">
+        <!-- Poll status indicator -->
+        <span class="poll-indicator" id="pollIndicator" title="Polling for matches every 10s">
+          <span class="poll-dot"></span> Live
+        </span>
+        <button class="ghost-btn" id="shuffleBtn" aria-label="Shuffle deck">
+          Shuffle
+        </button>
+      </div>
     </header>
 
     <main class="app__main">
@@ -32,18 +42,27 @@
         <button class="ctrl ctrl--superlike" id="superLikeBtn" title="Super Like">★</button>
         <button class="ctrl ctrl--like" id="likeBtn" title="Like">♥</button>
       </div>
-
-      <p class="note">
-        <strong>Note:</strong> Swiping and button actions need to be implemented.
-      </p>
     </main>
 
     <footer class="app__footer">
-      AI all the things!
+      AI all the things! &nbsp;·&nbsp; polling every 10 s for matches
     </footer>
   </div>
+
+  <!-- ── Match notification banner ─────────────────────────────────────── -->
+  <aside id="matchBanner" class="match-banner" role="alertdialog" aria-label="New match notification"
+    aria-hidden="true">
+    <div class="match-banner__header">
+      <span class="match-banner__title">🎉 It's a Match!</span>
+      <button class="match-banner__close" id="dismissMatch" aria-label="Dismiss">✕</button>
+    </div>
+    <div class="match-banner__body" id="matchList">
+      <!-- Match items injected by app.js -->
+    </div>
+  </aside>
 
   <!-- Load logic after DOM -->
   <script src="./app.js"></script>
 </body>
+
 </html>
